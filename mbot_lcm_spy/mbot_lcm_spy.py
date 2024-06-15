@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import lcm
 import time
 from collections import defaultdict
@@ -9,7 +11,7 @@ import importlib
 parser = argparse.ArgumentParser(description="LCM Spy CLI")
 parser.add_argument("--channels", type=str, help="Comma-separated list of channel names to print decoded messages")
 parser.add_argument("--rate", type=float, default=1, help="Rate at which data is printed in Hz (default: 1 Hz)")
-parser.add_argument("--module", type=str, help="Module to use for decoding messages")
+parser.add_argument("--module", type=str, default="mbot_lcm_msgs", help="Module to use for decoding messages")
 args = parser.parse_args()
 
 # Parse channels from the --channels argument
@@ -36,8 +38,6 @@ decoded_message_dict = defaultdict(list)
 def message_handler(channel, data):
     global message_counts, message_times, channel_types, decoded_message_dict
     
-    msg_time = int(time.time())
-    
     lcm_type = "Unknown"
     decoded_message = None
     if decode_module:
@@ -47,9 +47,8 @@ def message_handler(channel, data):
                 lcm_type_class = getattr(decode_module, attr)
                 if isinstance(lcm_type_class, type) and hasattr(lcm_type_class, 'decode'):
                     try:
-                        lcm_type_instance = lcm_type_class.decode(data)
                         lcm_type = lcm_type_class.__name__
-                        decoded_message = lcm_type_instance
+                        decoded_message = lcm_type_class.decode(data)
                         break
                     except Exception:
                         continue
@@ -58,12 +57,71 @@ def message_handler(channel, data):
 
     # Store the decoded message fields if the channel matches any of the specified channels
     if channel in channels_to_print and decoded_message:
-        decoded_message_dict[channel] = [(field, getattr(decoded_message, field)) for field in decoded_message.__slots__]
-    
+        decoded_message_dict[channel] = decode_fields(decoded_message)
+
     # Update message counts and times
     message_counts[channel] += 1
     message_times[channel].append(time.time())
     channel_types[channel] = lcm_type
+
+# Helper function to truncate long lists
+def truncate_array(value):
+    try:
+        # checks if the value is array-like and if its length > 10
+        if hasattr(value, '__len__') and len(value) > 10:
+            return tuple(value[:10]) + ("...",)
+    except TypeError:
+        pass
+        # otherwise return the original value
+    return value
+
+# Helper function to recursively decode nested messages
+def decode_fields(decoded_msg):
+    fields = []
+    # decoded_msg.__slots__ is a list of components of the decoded message, such as utime
+    for field in decoded_msg.__slots__:
+        value = getattr(decoded_msg, field)
+        # Check if the value is a list or tuple of nested objects
+        if isinstance(value, (list, tuple)):
+            nested_values = []
+            for item in value:
+                if hasattr(item, '__slots__'):
+                    # Recursively decode each item in the list/tuple if it has __slots__
+                    nested_values.append(decode_fields(item))
+                else:
+                    # Append the item directly if it doesn't have __slots__
+                    nested_values.append(truncate_array(item))
+            fields.append((field, nested_values))
+        elif hasattr(value, '__slots__'):
+            # Recursively decode nested objects
+            fields.append((field, decode_fields(value)))
+        else:
+            # Truncate long arrays/lists if the value is an array-like data
+            fields.append((field, truncate_array(value)))
+    return fields
+
+def print_decoded_message(msg, indent=0):
+    # print (key, value)
+    if isinstance(msg, tuple) and len(msg) == 2 and not hasattr(msg[1], '__len__'):
+        key, value = msg
+        print(f"{' ' * indent}{key:<20} {str(value):<20}")
+    # print (key, [value1, value2, value3])
+    elif isinstance(msg, tuple) and len(msg) == 2 and not hasattr(msg[1][0], '__len__'):
+        key, value = msg
+        print(f"{' ' * indent}{key:<20} {str(value):<20}")
+    # print all other cases
+    else:
+        for item in msg:
+            if isinstance(item, tuple) and len(item) == 2:
+                key, value = item
+                # if the value is singular or a simple list/tuple, print them directly
+                if not hasattr(value, '__len__') or not hasattr(value[0], '__len__'):
+                    print(f"{' ' * indent}{key:<20} {str(value):<20}")
+                # if the value is a nested array-like structure, recursion
+                else:
+                    print(f"{' ' * indent}{key}:")
+                    for v in value:
+                        print_decoded_message(v, indent + 2)
 
 def print_status():
     while not stop_event.is_set():
@@ -86,8 +144,8 @@ def print_status():
                 print(f"\nDecoded message on channel {channel}:")
                 print(f"{'Field':<20} {'Value':<20}")
                 print("="*40)
-                for field, value in decoded_message_dict[channel]:
-                    print(f"{field:<20} {str(value):<20}")
+                # print(decoded_message_dict[channel])
+                print_decoded_message(decoded_message_dict[channel]) 
 
 def lcm_handle_loop(lc):
     while not stop_event.is_set():
