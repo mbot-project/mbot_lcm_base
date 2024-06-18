@@ -3,6 +3,7 @@
 This repo contains some essential subpackages needed by all other MBot applications running off LCM:
 * [mbot_lcm_serial](mbot_lcm_serial): LCM-to-serial communication with the MBot control board.
 * [mbot_msgs](mbot_msgs): Message type definitions for LCM.
+* [mbot_lcm_spy](mbot_lcm_spy): Command line tool to monitor lcm messages similar to lcm-spy.
 
 ## Fast Install
 
