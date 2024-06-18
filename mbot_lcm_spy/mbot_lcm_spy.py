@@ -69,7 +69,7 @@ def truncate_array(value):
     try:
         # checks if the value is array-like and if its length > 10
         if hasattr(value, '__len__') and len(value) > 10:
-            return tuple(value[:8]) + ("...",)
+            return tuple(value[:10]) + ("...",)
     except TypeError:
         pass
         # otherwise return the original value
