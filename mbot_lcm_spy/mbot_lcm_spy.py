@@ -127,7 +127,7 @@ def print_status():
     while not stop_event.is_set():
         time.sleep(1 / args.rate)  # Update at the specified rate
         print("\033[H\033[J", end="")  # Clear the screen
-        print(f"{'Channel':<20} {'Type':<20} {'Rate':<10} {'Msgs Rcvd':<10}")
+        print(f"{'Channel':<20} {'Type':<22} {'Rate':<10} {'Msgs Rcvd':<10}")
         print("="*60)
         for channel, times in message_times.items():
             current_time = time.time()
@@ -137,7 +137,7 @@ def print_status():
             rate = len(times) / 1.0
             total_messages = message_counts[channel]
             lcm_type = channel_types.get(channel, "Unknown")
-            print(f"{channel:<20} {lcm_type:<20} {rate:<10.2f} {total_messages:<10}")
+            print(f"{channel:<20} {lcm_type:<22} {rate:<10.2f} {total_messages:<10}")
         
         for channel in channels_to_print:
             if channel in decoded_message_dict:
