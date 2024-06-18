@@ -69,7 +69,7 @@ def truncate_array(value):
     try:
         # checks if the value is array-like and if its length > 10
         if hasattr(value, '__len__') and len(value) > 10:
-            return tuple(value[:10]) + ("...",)
+            return tuple(value[:8]) + ("...",)
     except TypeError:
         pass
         # otherwise return the original value
@@ -91,12 +91,11 @@ def decode_fields(decoded_msg):
                 else:
                     # Append the item directly if it doesn't have __slots__
                     nested_values.append(truncate_array(item))
-            fields.append((field, nested_values))
+            fields.append((field, truncate_array(nested_values)))
         elif hasattr(value, '__slots__'):
             # Recursively decode nested objects
             fields.append((field, decode_fields(value)))
         else:
-            # Truncate long arrays/lists if the value is an array-like data
             fields.append((field, truncate_array(value)))
     return fields
 
