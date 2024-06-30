@@ -113,10 +113,13 @@ def print_decoded_message(msg, indent=0):
         for item in msg:
             if isinstance(item, tuple) and len(item) == 2:
                 key, value = item
-                # if the value is singular or a simple list/tuple, print them directly
-                if not hasattr(value, '__len__') or not hasattr(value[0], '__len__'):
+                # if the value is singular print them directly
+                if not hasattr(value, '__len__'):
                     print(f"{' ' * indent}{key:<20} {str(value):<20}")
-                # if the value is a nested array-like structure, recursion
+                # if the value is a simple list
+                elif (len(value) == 0) or (len(value) > 0 and not hasattr(value[0], '__len__')):
+                    print(f"{' ' * indent}{key:<20} {str(value):<20}")
+                # if the value is a nested array-like structure, recursion    
                 else:
                     print(f"{' ' * indent}{key}:")
                     for v in value:
