@@ -1,9 +1,17 @@
-> This is a command line tool works just like lcm-spy
+> This tool is a command-line version of lcm-spy
 
+## Install
+> If you have run the install.sh in the home folder, then you don't need the following commands.
+
+```bash
+# Install mbot-lcm-spy
+chmod +x mbot_lcm_spy.py
+sudo cp mbot_lcm_spy.py /usr/local/bin/mbot-lcm-spy
+```
 
 ## Usage
 ```shell
-mbot-lcm-spy [-h] [--channels CHANNELS] [--rate RATE] [--module MODULE]
+mbot lcm-spy [-h] [--channels CHANNELS] [--rate RATE] [--module MODULE]
 ```
 
 ### Options
