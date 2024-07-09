@@ -1,13 +1,5 @@
 > This tool is similar to rosmsg, used to inspect the data structure of MBot LCM messages. Though rosmsg is deprecated in ROS 2 now.
 
-## Install
-> If you have run the install.sh in the home folder, then you don't need the following commands.
-
-```bash
-chmod +x mbot_lcm_msg.py
-sudo cp mbot_lcm_msg.py /usr/local/bin/mbot-lcm-msg
-```
-
 ## Usage
 ```
 mbot lcm-msg [-h] [--module MODULE] {show,list} ...

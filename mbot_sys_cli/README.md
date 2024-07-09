@@ -8,6 +8,7 @@ This folder contains command line tools for the MBot system:
 - mbot-lcm-msg: Functions like `ros msg`, used to inspect the data structure of MBot LCM messages.
 
 ## Installation
+> If you have run the install.sh under the mbot_lcm_base folder, then you don't need to run this.
 ```bash
 chmod +x install.sh
 ./install.sh

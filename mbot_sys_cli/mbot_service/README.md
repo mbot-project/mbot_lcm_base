@@ -1,11 +1,4 @@
 > This tool is to manage and monitor MBot system services.
-## Install
-> If you have run the install.sh in the home folder, then you don't need the following commands.
-
-```bash
-chmod +x mbot-service.sh
-sudo cp mbot-service.sh /usr/local/bin/mbot-service
-```
 
 ## Usage
 
