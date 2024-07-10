@@ -13,12 +13,14 @@ make
 sudo make install
 cd ..
 
-# Install mbot-lcm-spy
-echo "Installing mbot-lcm-spy..."
-chmod +x mbot_lcm_spy/mbot_lcm_spy.py
-sudo cp mbot_lcm_spy/mbot_lcm_spy.py /usr/local/bin/mbot-lcm-spy
+# Install mbot-sys-cli
+chmod +x mbot_sys_cli/install.sh
+cd mbot_sys_cli
+./install.sh
+
 
 # Install the serial service.
+cd ..
 LCM_SERIAL_SRV_PATH=mbot_lcm_serial/services/
 LCM_SERIAL_SRV_NAME=mbot-lcm-serial.service
 echo

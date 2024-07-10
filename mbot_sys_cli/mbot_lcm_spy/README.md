@@ -1,9 +1,8 @@
-> This is a command line tool works just like lcm-spy
-
+> This tool is a command-line version of lcm-spy
 
 ## Usage
 ```shell
-mbot-lcm-spy [-h] [--channels CHANNELS] [--rate RATE] [--module MODULE]
+mbot lcm-spy [-h] [--channels CHANNELS] [--rate RATE] [--module MODULE]
 ```
 
 ### Options
