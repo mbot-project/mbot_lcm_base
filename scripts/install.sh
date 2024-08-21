@@ -13,7 +13,14 @@ make
 sudo make install
 cd ..
 
+# Install mbot-sys-cli
+chmod +x mbot_sys_cli/install.sh
+cd mbot_sys_cli
+./install.sh
+
+
 # Install the serial service.
+cd ..
 LCM_SERIAL_SRV_PATH=mbot_lcm_serial/services/
 LCM_SERIAL_SRV_NAME=mbot-lcm-serial.service
 echo
