@@ -17,6 +17,7 @@
 #include <mbot_lcm_msgs_mbot_encoders_t.h>
 #include <mbot_lcm_msgs_mbot_motor_vel_t.h>
 #include <mbot_lcm_msgs_mbot_motor_pwm_t.h>
+#include <mbot_lcm_msgs_mbot_analog_t.h>
 #include <mbot_lcm_msgs_twist2D_t.h>
 #include <mbot_lcm_msgs_timestamp_t.h>
 
@@ -195,6 +196,21 @@ void serial_imu_cb(serial_mbot_imu_t* data)
     mbot_lcm_msgs_mbot_imu_t_publish(lcmInstance, MBOT_IMU_CHANNEL, &to_send);
 }
 
+void serial_analog_in_cb(serial_mbot_analog_t* data)
+{
+    mbot_lcm_msgs_mbot_analog_t to_send = {0};
+    to_send.utime = data->utime;
+    to_send.raw[0] = data->raw[0];
+    to_send.raw[1] = data->raw[1];
+    to_send.raw[2] = data->raw[2];
+    to_send.raw[3] = data->raw[3];
+    to_send.volts[0] = data->volts[0];
+    to_send.volts[1] = data->volts[1];
+    to_send.volts[2] = data->volts[2];
+    to_send.volts[3] = data->volts[3];
+    mbot_lcm_msgs_mbot_analog_t_publish(lcmInstance, MBOT_ANALOG_CHANNEL, &to_send);
+}
+
 /*
 * Each topic that gets sent to the pico needs to be registered here
 * It must know the LCM channel, size of the serial message, serialize & deserialize functions
@@ -217,6 +233,7 @@ void register_topics()
     comms_register_topic(MBOT_VEL, sizeof(serial_twist2D_t), (Deserialize)&twist2D_t_deserialize, (Serialize)&twist2D_t_serialize, (MsgCb)serial_mbot_vel_cb);
     comms_register_topic(MBOT_MOTOR_VEL, sizeof(serial_mbot_motor_vel_t), (Deserialize)&mbot_motor_vel_t_deserialize, (Serialize)&mbot_motor_vel_t_serialize, (MsgCb)serial_motor_vel_cb);
     comms_register_topic(MBOT_MOTOR_PWM, sizeof(serial_mbot_motor_pwm_t), (Deserialize)&mbot_motor_pwm_t_deserialize, (Serialize)&mbot_motor_pwm_t_serialize, (MsgCb)serial_motor_pwm_cb);
+    comms_register_topic(MBOT_ANALOG_IN, sizeof(serial_mbot_analog_t), (Deserialize)&mbot_analog_t_deserialize, (Serialize)&mbot_analog_t_serialize, (MsgCb)serial_analog_in_cb);
 
 }
 

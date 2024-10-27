@@ -4,5 +4,5 @@ struct mbot_analog_t
 {
     int64_t utime;
     int16_t raw[4]; // no units
-    float_t volts[4]; // volts
+    float volts[4]; // volts
 }
