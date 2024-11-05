@@ -44,6 +44,8 @@ set(LCM_FILES
       lcmtypes/planner_request_t.lcm
       lcmtypes/mbot_apriltag_t.lcm
       lcmtypes/mbot_apriltag_array_t.lcm
+      lcmtypes/mbot_cone_t.lcm
+      lcmtypes/mbot_cone_array_t.lcm
 )
 
 lcm_wrap_types(
