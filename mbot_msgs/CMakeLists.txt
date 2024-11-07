@@ -45,6 +45,8 @@ set(LCM_FILES
       lcmtypes/mbot_apriltag_t.lcm
       lcmtypes/mbot_apriltag_array_t.lcm
       lcmtypes/mbot_analog_t.lcm
+      lcmtypes/mbot_cone_t.lcm
+      lcmtypes/mbot_cone_array_t.lcm
 )
 
 lcm_wrap_types(
