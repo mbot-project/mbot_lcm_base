@@ -37,7 +37,7 @@ decoded_message_dict = defaultdict(list)
 
 def message_handler(channel, data):
     global message_counts, message_times, channel_types, decoded_message_dict
-    
+
     lcm_type = "Unknown"
     decoded_message = None
     if decode_module:
@@ -68,12 +68,21 @@ def message_handler(channel, data):
 def truncate_array(value):
     try:
         # checks if the value is array-like and if its length > 10
-        if hasattr(value, '__len__') and len(value) > 10:
+        if isinstance(value, str):
+            return value
+        elif hasattr(value, '__len__') and len(value) > 10:
             return tuple(value[:10]) + ("...",)
     except TypeError:
         pass
         # otherwise return the original value
     return value
+
+def format_value(value):
+    if isinstance(value, float):
+        return f"{value:.4f}"
+    elif isinstance(value, (list,tuple)):
+        return '[' + ', '.join(f"{v:.4f}" if isinstance(v, float) else str(v) for v in value) + ']'
+    return str(value)
 
 # Helper function to recursively decode nested messages
 def decode_fields(decoded_msg):
@@ -100,30 +109,19 @@ def decode_fields(decoded_msg):
     return fields
 
 def print_decoded_message(msg, indent=0):
-    # print (key, value)
-    if isinstance(msg, tuple) and len(msg) == 2 and not hasattr(msg[1], '__len__'):
+    if isinstance(msg, tuple) and len(msg) == 2:
         key, value = msg
-        print(f"{' ' * indent}{key:<20} {str(value):<20}")
-    # print (key, [value1, value2, value3])
-    elif isinstance(msg, tuple) and len(msg) == 2 and not hasattr(msg[1][0], '__len__'):
-        key, value = msg
-        print(f"{' ' * indent}{key:<20} {str(value):<20}")
-    # print all other cases
+        if isinstance(value, str) or not hasattr(value, '__len__'):
+            print(f"{' ' * indent}{key:<20} {format_value(value):<20}")
+        elif (len(value) == 0) or (len(value) > 0 and not hasattr(value[0], '__len__')): # (key, 1D array)
+            print(f"{' ' * indent}{key:<20} {format_value(value):<20}")
+        else:
+            print(f"{' ' * indent}{key}:")
+            for v in value:
+                print_decoded_message(v, indent + 2)
     else:
         for item in msg:
-            if isinstance(item, tuple) and len(item) == 2:
-                key, value = item
-                # if the value is singular print them directly
-                if not hasattr(value, '__len__'):
-                    print(f"{' ' * indent}{key:<20} {str(value):<20}")
-                # if the value is a simple list
-                elif (len(value) == 0) or (len(value) > 0 and not hasattr(value[0], '__len__')):
-                    print(f"{' ' * indent}{key:<20} {str(value):<20}")
-                # if the value is a nested array-like structure, recursion    
-                else:
-                    print(f"{' ' * indent}{key}:")
-                    for v in value:
-                        print_decoded_message(v, indent + 2)
+            print_decoded_message(item, indent)
 
 def print_status():
     while not stop_event.is_set():
@@ -140,14 +138,14 @@ def print_status():
             total_messages = message_counts[channel]
             lcm_type = channel_types.get(channel, "Unknown")
             print(f"{channel:<20} {lcm_type:<22} {rate:<10.2f} {total_messages:<10}")
-        
+
         for channel in channels_to_print:
             if channel in decoded_message_dict:
                 print(f"\nDecoded message on channel {channel}:")
                 print(f"{'Field':<20} {'Value':<20}")
                 print("="*40)
                 # print(decoded_message_dict[channel])
-                print_decoded_message(decoded_message_dict[channel]) 
+                print_decoded_message(decoded_message_dict[channel])
 
 def lcm_handle_loop(lc):
     while not stop_event.is_set():
@@ -171,7 +169,7 @@ if __name__ == "__main__":
     lcm_thread = Thread(target=lcm_handle_loop, args=(lc,))
     lcm_thread.daemon = True
     lcm_thread.start()
-    
+
     try:
         while True:
             time.sleep(1)  # Main thread sleep
