@@ -16,6 +16,11 @@ echo "Installing mbot-lcm-msg..."
 chmod +x mbot_lcm_msg/mbot_lcm_msg.py
 sudo cp mbot_lcm_msg/mbot_lcm_msg.py /usr/local/bin/mbot-lcm-msg
 
+# Install mbotfetch
+echo "Installing mbotfetch..."
+chmod +x mbot_fetch/mbot_fetch.sh
+sudo cp mbot_fetch/mbot_fetch.sh /usr/local/bin/mbotfetch
+
 # Install dispatcher script mbot
 echo "Installing mbot cli tools..."
 chmod +x mbot.sh
