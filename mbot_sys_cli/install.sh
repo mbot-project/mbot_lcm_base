@@ -21,6 +21,11 @@ echo "Installing mbotfetch..."
 chmod +x mbot_fetch/mbot_fetch.sh
 sudo cp mbot_fetch/mbot_fetch.sh /usr/local/bin/mbotfetch
 
+# Install mbot-status
+echo "Installing mbot-status..."
+chmod +x mbot_status/mbot_status.py
+sudo cp mbot_status/mbot_status.py /usr/local/bin/mbot-status
+
 # Install dispatcher script mbot
 echo "Installing mbot cli tools..."
 chmod +x mbot.sh
