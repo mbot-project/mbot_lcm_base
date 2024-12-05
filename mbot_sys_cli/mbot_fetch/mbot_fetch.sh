@@ -19,6 +19,24 @@ shell_name=$(basename $SHELL)
 memory_info=$(free -h | awk '/^Mem:/{print $3 " / " $2}')
 storage_info=$(df -h / | awk 'NR==2 {print $3 " / " $2 " (" $5 " used)"}')
 
+# Read firmware and calibration versions from ~/.mbot_info.txt
+firmware_version="N/A"
+calibration_version="N/A"
+
+if [ -f ~/.mbot_info.txt ]; then
+    read_firmware_version=$(grep "^mbot_firmware:" ~/.mbot_info.txt | cut -d ' ' -f 2)
+    read_calibration_version=$(grep "^mbot_calibration:" ~/.mbot_info.txt | cut -d ' ' -f 2)
+
+    # Use the read values only if they are not empty
+    if [ -n "$read_firmware_version" ]; then
+        firmware_version=$read_firmware_version
+    fi
+
+    if [ -n "$read_calibration_version" ]; then
+        calibration_version=$read_calibration_version
+    fi
+fi
+
 echo -e "${maize}"
 # cat "$ascii_art_file"
 cat <<'EOF'
@@ -41,5 +59,5 @@ echo -e "${blue_bold}Uptime:${reset} ${uptime_info}"
 echo -e "${blue_bold}Shell:${reset} ${shell_name}"
 echo -e "${blue_bold}Memory:${reset} ${memory_info}"
 echo -e "${blue_bold}Storage:${reset} ${storage_info}"
-echo -e "${blue_bold}Firmware Version:${reset} 1.2.0"
-echo -e "${blue_bold}LCM Base Version:${reset} 1.1.0"
+echo -e "${blue_bold}Firmware Version:${reset} ${firmware_version}"
+echo -e "${blue_bold}Calibration Version:${reset} ${calibration_version}"
