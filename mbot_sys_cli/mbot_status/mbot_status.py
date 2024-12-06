@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import textwrap
 import lcm
 import time
 import sys
@@ -28,6 +29,7 @@ class LCMFetch:
         self.battery_voltage = -1
         self.imu_readings = []
         self.initialized = {"battery": False, "imu": False}
+        self.bottom_board_connected = False
 
         self.lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=0")
 
@@ -51,6 +53,7 @@ class LCMFetch:
         battery_info = mbot_analog_t.decode(data)
         self.battery_voltage = battery_info.volts[3]
         self.initialized["battery"] = True
+        self.bottom_board_connected = True
 
     def imu_info_callback(self, channel, data):
         imu_reading = mbot_imu_t.decode(data)
@@ -79,6 +82,7 @@ class LCMFetch:
     def reset_variables(self):
         self.battery_voltage = -1
         self.imu_readings = []
+        self.bottom_board_connected = False
 
 def get_temperature():
     try:
@@ -91,19 +95,58 @@ def get_temperature():
         return -1
     
 def print_battery(battery_voltage):
-    print(f"{'Battery Voltage:':<20} {battery_voltage:>10.2f} V")
+    # Print the battery voltage in an aligned format
+    print(f"{'Battery Voltage:':<20} {battery_voltage:.2f} V")
+
+    # Nicely formatted voltage table for verbose output
+    voltage_table = """
+        Battery Information:
+        - Voltage = -1           : No message received
+        - Voltage in (0, 1.5)    : Missing jumper cap
+        - Voltage in (3.5, 5.5)  : Barrel plug is unplugged
+        - Voltage in (6, 7)      : Jumper cap is on 6 V
+        - Voltage in (7, 12)     : Jumper cap is on 12 V
+        """
+    if args.topic and args.verbose:
+        print(textwrap.dedent(voltage_table))
+
 
 def print_temperature(temperature):
-    print(f"{'Temperature:':<20} {temperature:>10.2f} C")
+    print(f"{'Temperature:':<20} {temperature:<.2f} C")
 
 def print_imu_test(imu_test):
-    # Align the text first, then apply color coding
-    status_text = f"{imu_test:>10}"
+    status_text = f"{imu_test:<10}"  # Align to the left
+
+    # Set status color and note based on imu_test result
     if imu_test == "Pass":
         imu_status_colored = f"\033[92m{status_text}\033[0m"  # Green text
     else:
         imu_status_colored = f"\033[91m{status_text}\033[0m"  # Red text
+
     print(f"{'IMU Test:':<20} {imu_status_colored}")
+    if args.verbose and imu_test == "Fail":
+        note = (
+            "   IMU readings (roll, pitch, yaw) are all 0. Possible causes:\n"
+            "   - IMU may be broken.\n"
+            "   - Bottom board may be disconnected."
+        )
+        print(f"Note:\n{note}")
+
+def print_bottom_board(bottom_board_connected):
+    if not bottom_board_connected:
+        status_text = f"{'Disconnected':<15}"  # Align to the left
+        print(f"{'Bottom Board:':<20} \033[91m{status_text}\033[0m")  # Red text
+        if args.verbose:
+            note = (
+                "    No LCM message received from the bottom board. Possible causes:\n"
+                "    - USB Type-C cable is not connected.\n"
+                "    - LCM Serial Server is not running."
+            )
+            print(f"Note:\n{note}")
+    else:
+        status_text = f"{'Connected':<15}"  # Align to the left
+        print(f"{'Bottom Board:':<20} \033[92m{status_text}\033[0m")  # Green text
+
 
 if __name__ == "__main__":
     lcm_fetched_status = LCMFetch()
@@ -133,6 +176,7 @@ if __name__ == "__main__":
         elif args.topic == "test":
             while True:
                 status_dict = lcm_fetched_status.get_status()
+                print_bottom_board(lcm_fetched_status.bottom_board_connected)
                 print_imu_test(status_dict['imu_test'])
                 if not args.continuous:
                     break
@@ -146,8 +190,8 @@ if __name__ == "__main__":
             # Print the status information
             print_battery(status_dict['battery'])
             print_temperature(temperature)
+            print_bottom_board(lcm_fetched_status.bottom_board_connected)
             print_imu_test(status_dict['imu_test'])
-
             if not args.continuous:
                 break
             print("\033[H\033[J", end="")  # Clear the screen
