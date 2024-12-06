@@ -5,7 +5,7 @@ set -e
 
 # Check if the user provided at least one argument
 if [ $# -lt 1 ]; then
-    echo "Usage: mbot {service|lcm-spy|lcm-msg} [args]"
+    echo "Usage: mbot {service|status|lcm-spy|lcm-msg} [args]"
     exit 1
 fi
 
@@ -17,6 +17,9 @@ case $command in
     service)
         /usr/local/bin/mbot-service "$@"
         ;;
+    status)
+        /usr/local/bin/mbot-status "$@"
+        ;;
     lcm-spy)
         /usr/local/bin/mbot-lcm-spy "$@"
         ;;
@@ -25,7 +28,7 @@ case $command in
         ;;
     *)
         echo "Unknown command: $command"
-        echo "Usage: mbot {service|lcm-spy|lcm-msg} [args]"
+        echo "Usage: mbot {service|status|lcm-spy|lcm-msg} [args]"
         exit 1
         ;;
 esac

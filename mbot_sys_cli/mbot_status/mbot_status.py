@@ -14,9 +14,21 @@ RATE = 1
 
 # Command-line argument parsing
 parser = argparse.ArgumentParser(description="MBot Status")
-parser.add_argument("--topic", type=str, help="Topic to monitor (default: all topics)")
-parser.add_argument("--continuous", action="store_true", help="Continue monitoring status (until Ctrl+C)")
-parser.add_argument("--verbose", action="store_true", help="Give details (only valid if --topic is specified)")
+parser.add_argument(
+    "--topic", 
+    type=str, 
+    help="Topic to monitor (default: all topics). Available topics: `battery`, `temperature`, `test`."
+)
+parser.add_argument(
+    "--continuous", 
+    action="store_true", 
+    help="Continue monitoring status until interrupted (e.g., with Ctrl+C)."
+)
+parser.add_argument(
+    "--verbose", 
+    action="store_true", 
+    help="Provide detailed information (only valid if --topic is specified)."
+)
 args = parser.parse_args()
 
 # Custom validation
