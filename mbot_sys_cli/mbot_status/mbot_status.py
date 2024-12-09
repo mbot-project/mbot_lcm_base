@@ -7,6 +7,7 @@ import sys
 import subprocess
 from mbot_lcm_msgs.mbot_analog_t import mbot_analog_t
 from mbot_lcm_msgs.mbot_imu_t import mbot_imu_t
+from mbot_lcm_msgs.lidar_t import lidar_t
 import threading
 
 # Define variables
@@ -17,7 +18,7 @@ parser = argparse.ArgumentParser(description="MBot Status")
 parser.add_argument(
     "--topic", 
     type=str, 
-    help="Topic to monitor (default: all topics). Available topics: `battery`, `temperature`, `test`."
+    help="Topic to monitor (default: all topics). Available topics: battery, temperature, test."
 )
 parser.add_argument(
     "--continuous", 
@@ -40,14 +41,17 @@ class LCMFetch:
     def __init__(self):
         self.battery_voltage = -1
         self.imu_readings = []
-        self.initialized = {"battery": False, "imu": False}
-        self.bottom_board_connected = False
+        self.lidar_num_ranges = -1
+        self.initialized = {"battery": False, 
+                            "imu": False, 
+                            "lidar": False}
 
         self.lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=0")
 
         # subscriber
         self.lc.subscribe("MBOT_ANALOG_IN", self.battery_info_callback)
         self.lc.subscribe("MBOT_IMU", self.imu_info_callback)
+        self.lc.subscribe("LIDAR", self.lidar_info_callback)
 
         # Start a thread to handle LCM messages continuously
         self.lcm_thread = threading.Thread(target=self.lcm_handler, daemon=True)
@@ -65,7 +69,6 @@ class LCMFetch:
         battery_info = mbot_analog_t.decode(data)
         self.battery_voltage = battery_info.volts[3]
         self.initialized["battery"] = True
-        self.bottom_board_connected = True
 
     def imu_info_callback(self, channel, data):
         imu_reading = mbot_imu_t.decode(data)
@@ -73,17 +76,27 @@ class LCMFetch:
         self.imu_readings = [roll, pitch, yaw]
         self.initialized["imu"] = True
 
+    def lidar_info_callback(self, channel, data):
+        lidar_reading = lidar_t.decode(data)
+        num_ranges = lidar_reading.num_ranges
+        self.lidar_num_ranges = num_ranges
+        self.initialized["lidar"] = True
+
     def imu_test(self):
         if self.imu_readings != []:
             return any(element > 0.0 for element in self.imu_readings)
         return False
 
+    def lidar_test(self):
+        if self.lidar_num_ranges < 250:
+            return False
+        return True
+        
     def get_status(self):
-        imu_test = "Pass" if self.imu_test() else "Fail"
-
         status_dict = {
             "battery": self.battery_voltage,
-            "imu_test": imu_test
+            "imu_test": self.imu_test(),
+            "lidar": self.lidar_test()
         }
         return status_dict
 
@@ -94,7 +107,7 @@ class LCMFetch:
     def reset_variables(self):
         self.battery_voltage = -1
         self.imu_readings = []
-        self.bottom_board_connected = False
+        self.lidar_num_ranges = -1
 
 def get_temperature():
     try:
@@ -105,7 +118,21 @@ def get_temperature():
     except Exception as e:
         print(f"Error reading temperature: {e}")
         return -1
-    
+
+def get_usb_connection(usb_device_dict):
+    try:
+        result = subprocess.run(["lsusb"], capture_output=True, text=True, check=True)
+        lsusb_output = result.stdout.strip()
+
+        usb_device_dict["pico"] = any("Pi Pico" in line for line in lsusb_output.splitlines())
+        usb_device_dict["lidar"] = any("CP210x UART Bridge" in line for line in lsusb_output.splitlines())
+
+        return usb_device_dict
+
+    except Exception as e:
+        print(f"Error checking USB devices: {e}")
+        return usb_device_dict
+
 def print_battery(battery_voltage):
     # Print the battery voltage in an aligned format
     print(f"{'Battery Voltage:':<20} {battery_voltage:.2f} V")
@@ -122,46 +149,81 @@ def print_battery(battery_voltage):
     if args.topic and args.verbose:
         print(textwrap.dedent(voltage_table))
 
-
 def print_temperature(temperature):
     print(f"{'Temperature:':<20} {temperature:<.2f} C")
 
 def print_imu_test(imu_test):
-    status_text = f"{imu_test:<10}"  # Align to the left
-
-    # Set status color and note based on imu_test result
-    if imu_test == "Pass":
+    if imu_test:
+        status_text = f"{'Pass':<10}"
         imu_status_colored = f"\033[92m{status_text}\033[0m"  # Green text
     else:
+        status_text = f"{'Fail':<10}"
         imu_status_colored = f"\033[91m{status_text}\033[0m"  # Red text
 
     print(f"{'IMU Test:':<20} {imu_status_colored}")
-    if args.verbose and imu_test == "Fail":
+    if args.verbose and not imu_test:
         note = (
             "   IMU readings (roll, pitch, yaw) are all 0. Possible causes:\n"
-            "   - IMU may be broken.\n"
-            "   - Bottom board may be disconnected."
+            "   - Bottom board may be disconnected. \n"
+            "   - LCM server might be experiencing a glitch. Press RST button on Pico. \n"
+            "   - IMU may be broken."
         )
         print(f"Note:\n{note}")
 
-def print_bottom_board(bottom_board_connected):
-    if not bottom_board_connected:
-        status_text = f"{'Disconnected':<15}"  # Align to the left
-        print(f"{'Bottom Board:':<20} \033[91m{status_text}\033[0m")  # Red text
+def print_usb_devices(usb_devices):
+    # Print status for Pico
+    if not usb_devices.get("pico", False):
+        status_text = f"{'Disconnected':<15}"
+        print(f"{'Pico Board:':<20} \033[91m{status_text}\033[0m")
         if args.verbose:
             note = (
-                "    No LCM message received from the bottom board. Possible causes:\n"
-                "    - USB Type-C cable is not connected.\n"
-                "    - LCM Serial Server is not running."
+                "    The Pico board is not recognized by CLI lsusb. Possible causes:\n"
+                "    - USB Type-C cable is not connected or faulty.\n"
+                "    - Battery is low."
             )
             print(f"Note:\n{note}")
     else:
-        status_text = f"{'Connected':<15}"  # Align to the left
-        print(f"{'Bottom Board:':<20} \033[92m{status_text}\033[0m")  # Green text
+        status_text = f"{'Connected':<15}"
+        print(f"{'Pico Board:':<20} \033[92m{status_text}\033[0m")
 
+    # Print status for Lidar
+    if not usb_devices.get("lidar", False):
+        status_text = f"{'Disconnected':<15}"
+        print(f"{'Lidar:':<20} \033[91m{status_text}\033[0m")
+        if args.verbose:
+            note = (
+                "    The Lidar is not recognized by CLI lsusb. Possible causes:\n"
+                "    - USB cable is not connected or faulty.\n"
+                "    - Battery is low."
+            )
+            print(f"Note:\n{note}")
+    else:
+        status_text = f"{'Connected':<15}"
+        print(f"{'Lidar:':<20} \033[92m{status_text}\033[0m")
+
+def print_lidar_test(lidar_test):
+    if lidar_test:
+        status_text = f"{'Pass':<10}"
+        imu_status_colored = f"\033[92m{status_text}\033[0m"  # Green text
+    else:
+        status_text = f"{'Fail':<10}"
+        imu_status_colored = f"\033[91m{status_text}\033[0m"  # Red text
+
+    print(f"{'Lidar Test:':<20} {imu_status_colored}")
+    if args.verbose and not lidar_test:
+        note = (
+            "   LiDAR number of ranges < 250. Possible causes:\n"
+            "   - LiDAR Disconnected. \n"
+            "   - LiDAR might broken."
+        )
+        print(f"Note:\n{note}") 
 
 if __name__ == "__main__":
     lcm_fetched_status = LCMFetch()
+    usb_devices = {
+        "pico": False,
+        "lidar": False
+    }
 
     # Wait until the LCM messages are received
     past_time = time.time()
@@ -188,8 +250,10 @@ if __name__ == "__main__":
         elif args.topic == "test":
             while True:
                 status_dict = lcm_fetched_status.get_status()
-                print_bottom_board(lcm_fetched_status.bottom_board_connected)
+                usb_devices = get_usb_connection(usb_devices)
+                print_usb_devices(usb_devices)
                 print_imu_test(status_dict['imu_test'])
+                print_lidar_test(status_dict['lidar'])
                 if not args.continuous:
                     break
                 print("\033[H\033[J", end="")  # Clear the screen
@@ -198,12 +262,13 @@ if __name__ == "__main__":
         while True:
             status_dict = lcm_fetched_status.get_status()
             temperature = get_temperature()
-
+            usb_devices = get_usb_connection(usb_devices)
             # Print the status information
             print_battery(status_dict['battery'])
             print_temperature(temperature)
-            print_bottom_board(lcm_fetched_status.bottom_board_connected)
+            print_usb_devices(usb_devices)
             print_imu_test(status_dict['imu_test'])
+            print_lidar_test(status_dict['lidar'])
             if not args.continuous:
                 break
             print("\033[H\033[J", end="")  # Clear the screen
