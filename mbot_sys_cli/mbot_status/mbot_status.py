@@ -84,7 +84,7 @@ class LCMFetch:
 
     def imu_test(self):
         if self.imu_readings != []:
-            return any(element > 0.0 for element in self.imu_readings)
+            return any(element != 0.0 for element in self.imu_readings)
         return False
 
     def lidar_test(self):
@@ -152,7 +152,7 @@ def print_battery(battery_voltage):
 def print_temperature(temperature):
     print(f"{'Temperature:':<20} {temperature:<.2f} C")
 
-def print_imu_test(imu_test):
+def print_imu_test(imu_test, imu_readings):
     if imu_test:
         status_text = f"{'Pass':<10}"
         imu_status_colored = f"\033[92m{status_text}\033[0m"  # Green text
@@ -162,8 +162,9 @@ def print_imu_test(imu_test):
 
     print(f"{'IMU Test:':<20} {imu_status_colored}")
     if args.verbose and not imu_test:
+        formatted_readings = ", ".join(f"{reading:.2f}" for reading in imu_readings)
         note = (
-            "   IMU readings (roll, pitch, yaw) are all 0. Possible causes:\n"
+           f"   IMU readings (roll, pitch, yaw) are [{formatted_readings}]. Possible causes:\n"
             "   - Bottom board may be disconnected. \n"
             "   - LCM server might be experiencing a glitch. Press RST button on Pico. \n"
             "   - IMU may be broken."
@@ -252,7 +253,7 @@ if __name__ == "__main__":
                 status_dict = lcm_fetched_status.get_status()
                 usb_devices = get_usb_connection(usb_devices)
                 print_usb_devices(usb_devices)
-                print_imu_test(status_dict['imu_test'])
+                print_imu_test(status_dict['imu_test'], lcm_fetched_status.imu_readings)
                 print_lidar_test(status_dict['lidar'])
                 if not args.continuous:
                     break
@@ -267,7 +268,7 @@ if __name__ == "__main__":
             print_battery(status_dict['battery'])
             print_temperature(temperature)
             print_usb_devices(usb_devices)
-            print_imu_test(status_dict['imu_test'])
+            print_imu_test(status_dict['imu_test'], lcm_fetched_status.imu_readings)
             print_lidar_test(status_dict['lidar'])
             if not args.continuous:
                 break
