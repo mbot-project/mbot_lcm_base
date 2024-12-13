@@ -36,11 +36,11 @@ cat << 'EOF' | sudo tee /etc/bash_completion.d/mbot > /dev/null
 # mbot completion
 _mbot()
 {
-    local cur prev commands service status spy msg
+    local cur prev commands service status info spy msg
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    commands="service status lcm-spy lcm-msg"
+    commands="service status info lcm-spy lcm-msg"
 
     if [[ ${COMP_CWORD} -eq 1 ]] ; then
         COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
@@ -56,6 +56,9 @@ _mbot()
         status)
             status="--topic --continuous --verbose"
             COMPREPLY=( $(compgen -W "${status}" -- ${cur}) )
+            return 0
+            ;;
+        info)
             return 0
             ;;
         lcm-spy)
