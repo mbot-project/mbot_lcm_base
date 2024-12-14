@@ -57,44 +57,63 @@ class LCMFetch:
         self.lcm_thread = threading.Thread(target=self.lcm_handler, daemon=True)
         self.lcm_thread.start()
 
+        # lcm time 
+        self.battery_lcm_time = 0
+        self.imu_lcm_time = 0
+        self.lidar_lcm_time = 0
+
     def lcm_handler(self):
         while True:
             # Wait for a message for up to 1 second
-            past_time = time.time()
             self.lc.handle_timeout(1000)
-            if time.time() - past_time > 1:
-                self.reset_variables()
 
     def battery_info_callback(self, channel, data):
         battery_info = mbot_analog_t.decode(data)
         self.battery_voltage = battery_info.volts[3]
         self.initialized["battery"] = True
+        self.battery_lcm_time = time.time()
 
     def imu_info_callback(self, channel, data):
         imu_reading = mbot_imu_t.decode(data)
         roll, pitch, yaw = imu_reading.angles_rpy
         self.imu_readings = [roll, pitch, yaw]
         self.initialized["imu"] = True
+        self.imu_lcm_time = time.time()
 
     def lidar_info_callback(self, channel, data):
         lidar_reading = lidar_t.decode(data)
         num_ranges = lidar_reading.num_ranges
         self.lidar_num_ranges = num_ranges
         self.initialized["lidar"] = True
+        self.lidar_lcm_time = time.time()
+
+    def battery_test(self):
+        if (time.time() - self.battery_lcm_time) > 1:
+            self.battery_voltage = -1
+        return self.battery_voltage
 
     def imu_test(self):
+        if (time.time() - self.imu_lcm_time) > 1:
+            self.imu_readings = []
+            return False
+        
         if self.imu_readings != []:
             return any(element != 0.0 for element in self.imu_readings)
+        
         return False
 
     def lidar_test(self):
+        if (time.time() - self.lidar_lcm_time) > 1:
+            self.lidar_num_ranges = -1
+            return False
+        
         if self.lidar_num_ranges < 250:
             return False
         return True
         
     def get_status(self):
         status_dict = {
-            "battery": self.battery_voltage,
+            "battery": self.battery_test(),
             "imu_test": self.imu_test(),
             "lidar": self.lidar_test()
         }
@@ -103,11 +122,6 @@ class LCMFetch:
     def is_initialized(self):
         # Check if all necessary data has been received
         return all(self.initialized.values())
-
-    def reset_variables(self):
-        self.battery_voltage = -1
-        self.imu_readings = []
-        self.lidar_num_ranges = -1
 
 def get_temperature():
     try:
