@@ -204,19 +204,19 @@ def print_usb_devices(usb_devices):
     # Print status for Lidar
     if not usb_devices.get("lidar", False):
         status_text = f"{'Disconnected':<15}"
-        print(f"{'Lidar:':<20} \033[91m{status_text}\033[0m")
+        print(f"{'LiDAR:':<20} \033[91m{status_text}\033[0m")
         if args.verbose:
             note = (
-                "    The Lidar is not recognized by CLI lsusb. Possible causes:\n"
+                "    The LiDAR is not recognized by CLI lsusb. Possible causes:\n"
                 "    - USB cable is not connected or faulty.\n"
                 "    - Battery is low."
             )
             print(f"Note:\n{note}")
     else:
         status_text = f"{'Connected':<15}"
-        print(f"{'Lidar:':<20} \033[92m{status_text}\033[0m")
+        print(f"{'LiDAR:':<20} \033[92m{status_text}\033[0m")
 
-def print_lidar_test(lidar_test):
+def print_lidar_test(lidar_test, lidar_readings):
     if lidar_test:
         status_text = f"{'Pass':<10}"
         imu_status_colored = f"\033[92m{status_text}\033[0m"  # Green text
@@ -224,11 +224,11 @@ def print_lidar_test(lidar_test):
         status_text = f"{'Fail':<10}"
         imu_status_colored = f"\033[91m{status_text}\033[0m"  # Red text
 
-    print(f"{'Lidar Test:':<20} {imu_status_colored}")
+    print(f"{'LiDAR Test:':<20} {imu_status_colored}")
     if args.verbose and not lidar_test:
         note = (
-            "   LiDAR number of ranges < 250. Possible causes:\n"
-            "   - LiDAR Disconnected. \n"
+            f"   LIDAR's number of ranges is {lidar_readings} < 250. Possible causes:\n"
+            "   - LiDAR disconnected if entry = -1. \n"
             "   - LiDAR might broken."
         )
         print(f"Note:\n{note}") 
@@ -268,7 +268,7 @@ if __name__ == "__main__":
                 usb_devices = get_usb_connection(usb_devices)
                 print_usb_devices(usb_devices)
                 print_imu_test(status_dict['imu_test'], lcm_fetched_status.imu_readings)
-                print_lidar_test(status_dict['lidar'])
+                print_lidar_test(status_dict['lidar'], lcm_fetched_status.lidar_num_ranges)
                 if not args.continuous:
                     break
                 print("\033[H\033[J", end="")  # Clear the screen
@@ -283,7 +283,7 @@ if __name__ == "__main__":
             print_temperature(temperature)
             print_usb_devices(usb_devices)
             print_imu_test(status_dict['imu_test'], lcm_fetched_status.imu_readings)
-            print_lidar_test(status_dict['lidar'])
+            print_lidar_test(status_dict['lidar'], lcm_fetched_status.lidar_num_ranges)
             if not args.continuous:
                 break
             print("\033[H\033[J", end="")  # Clear the screen
