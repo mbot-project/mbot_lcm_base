@@ -178,12 +178,14 @@ def print_imu_test(imu_test, imu_readings):
     if args.verbose and not imu_test:
         formatted_readings = ", ".join(f"{reading:.2f}" for reading in imu_readings)
         note = (
-           f"   IMU readings (roll, pitch, yaw) are [{formatted_readings}]. Possible causes:\n"
-            "   - Bottom board may be disconnected. \n"
-            "   - LCM server might be experiencing a glitch. Press RST button on Pico. \n"
-            "   - IMU may be broken."
+           f"IMU readings (roll, pitch, yaw) are [{formatted_readings}]. \n"
+            "- Bottom board might be disconnected. \n"
+            "- LCM server could be down. Press RST button on Pico. \n"
+            "- IMU may be broken."
         )
-        print(f"Note:\n{note}")
+        print(f"{'----------- Note -----------':^28}")
+        print(note)
+        print(f"{'----------------------------':^28}")
 
 def print_usb_devices(usb_devices):
     # Print status for Pico
@@ -192,11 +194,13 @@ def print_usb_devices(usb_devices):
         print(f"{'Pico Board:':<20} \033[91m{status_text}\033[0m")
         if args.verbose:
             note = (
-                "    The Pico board is not recognized by CLI lsusb. Possible causes:\n"
-                "    - USB Type-C cable is not connected or faulty.\n"
-                "    - Battery is low."
+                "The Pico board is not recognized by CLI lsusb. \n" 
+                "- USB Type-C cable might be disconnected or faulty.\n"
+                "- Battery might be low."
             )
-            print(f"Note:\n{note}")
+            print(f"{'----------- Note -----------':^28}")
+            print(note)
+            print(f"{'----------------------------':^28}")
     else:
         status_text = f"{'Connected':<15}"
         print(f"{'Pico Board:':<20} \033[92m{status_text}\033[0m")
@@ -207,11 +211,13 @@ def print_usb_devices(usb_devices):
         print(f"{'LiDAR:':<20} \033[91m{status_text}\033[0m")
         if args.verbose:
             note = (
-                "    The LiDAR is not recognized by CLI lsusb. Possible causes:\n"
-                "    - USB cable is not connected or faulty.\n"
-                "    - Battery is low."
+                "The LiDAR is not recognized by CLI lsusb. \n "
+                "- USB cable might be disconnected or faulty.\n"
+                "- Battery might be low."
             )
-            print(f"Note:\n{note}")
+            print(f"{'----------- Note -----------':^28}")
+            print(note)
+            print(f"{'----------------------------':^28}")
     else:
         status_text = f"{'Connected':<15}"
         print(f"{'LiDAR:':<20} \033[92m{status_text}\033[0m")
@@ -227,11 +233,13 @@ def print_lidar_test(lidar_test, lidar_readings):
     print(f"{'LiDAR Test:':<20} {imu_status_colored}")
     if args.verbose and not lidar_test:
         note = (
-            f"   LIDAR's number of ranges is {lidar_readings} < 250. Possible causes:\n"
-            "   - LiDAR disconnected if entry = -1. \n"
-            "   - LiDAR might broken."
+            f"LIDAR's number of ranges is {lidar_readings} < 250. \n"
+            "- LiDAR might be disconnected if entry = -1. \n"
+            "- LiDAR might broken."
         )
-        print(f"Note:\n{note}") 
+        print(f"{'----------- Note -----------':^28}")
+        print(note)
+        print(f"{'----------------------------':^28}")
 
 if __name__ == "__main__":
     lcm_fetched_status = LCMFetch()
