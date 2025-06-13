@@ -20,7 +20,7 @@
 #include <mbot_lcm_msgs_mbot_analog_t.h>
 #include <mbot_lcm_msgs_twist2D_t.h>
 #include <mbot_lcm_msgs_timestamp_t.h>
-
+#include <mbot_lcm_msgs_mbot_rob311_feedback_t.h>
 #include <mbot_lcm_msgs_serial.h>
 
 #include <mbot_lcm_serial/protocol.h>
@@ -211,6 +211,24 @@ void serial_analog_in_cb(serial_mbot_analog_t* data)
     mbot_lcm_msgs_mbot_analog_t_publish(lcmInstance, MBOT_ANALOG_CHANNEL, &to_send);
 }
 
+void serial_rob311_feedback_cb(serial_mbot_rob311_feedback_t* data)
+{
+    mbot_lcm_msgs_mbot_rob311_feedback_t to_send = {0};
+    to_send.utime = data->utime;
+    to_send.delta_ticks[0] = data->delta_ticks[0];
+    to_send.delta_ticks[1] = data->delta_ticks[1];
+    to_send.delta_ticks[2] = data->delta_ticks[2];
+    to_send.delta_time = data->delta_time;
+    to_send.volts[0] = data->volts[0];
+    to_send.volts[1] = data->volts[1];
+    to_send.volts[2] = data->volts[2];
+    to_send.volts[3] = data->volts[3];
+    to_send.angles_rpy[0] = data->angles_rpy[0];
+    to_send.angles_rpy[1] = data->angles_rpy[1];
+    to_send.angles_rpy[2] = data->angles_rpy[2];
+    mbot_lcm_msgs_mbot_rob311_feedback_t_publish(lcmInstance, MBOT_ROB311_FEEDBACK_CHANNEL, &to_send);
+}
+
 /*
 * Each topic that gets sent to the pico needs to be registered here
 * It must know the LCM channel, size of the serial message, serialize & deserialize functions
@@ -234,7 +252,7 @@ void register_topics()
     comms_register_topic(MBOT_MOTOR_VEL, sizeof(serial_mbot_motor_vel_t), (Deserialize)&mbot_motor_vel_t_deserialize, (Serialize)&mbot_motor_vel_t_serialize, (MsgCb)serial_motor_vel_cb);
     comms_register_topic(MBOT_MOTOR_PWM, sizeof(serial_mbot_motor_pwm_t), (Deserialize)&mbot_motor_pwm_t_deserialize, (Serialize)&mbot_motor_pwm_t_serialize, (MsgCb)serial_motor_pwm_cb);
     comms_register_topic(MBOT_ANALOG_IN, sizeof(serial_mbot_analog_t), (Deserialize)&mbot_analog_t_deserialize, (Serialize)&mbot_analog_t_serialize, (MsgCb)serial_analog_in_cb);
-
+    comms_register_topic(MBOT_ROB311_FEEDBACK, sizeof(serial_mbot_rob311_feedback_t), (Deserialize)&mbot_rob311_feedback_t_deserialize, (Serialize)&mbot_rob311_feedback_t_serialize, (MsgCb)serial_rob311_feedback_cb);
 }
 
 void* handle_lcm(void* data)
