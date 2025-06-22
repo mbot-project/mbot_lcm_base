@@ -3,8 +3,9 @@ package mbot_lcm_msgs;
 struct mbot_rob311_feedback_t
 {
     int64_t utime;
-    int32_t delta_ticks[3]; // no units
-    int32_t delta_time;     // [usec]
-    float volts[4];         // volts
-    float angles_rpy[3]; 
+    int32_t enc_ticks[3];       // no units
+    int32_t enc_delta_ticks[3]; // no units
+    int32_t enc_delta_time;     // [usec]
+    float imu_angles_rpy[3];    // [radian]
+    float volts[4];             // volts
 }

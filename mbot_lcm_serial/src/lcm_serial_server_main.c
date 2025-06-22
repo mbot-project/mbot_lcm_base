@@ -215,17 +215,20 @@ void serial_rob311_feedback_cb(serial_mbot_rob311_feedback_t* data)
 {
     mbot_lcm_msgs_mbot_rob311_feedback_t to_send = {0};
     to_send.utime = data->utime;
-    to_send.delta_ticks[0] = data->delta_ticks[0];
-    to_send.delta_ticks[1] = data->delta_ticks[1];
-    to_send.delta_ticks[2] = data->delta_ticks[2];
-    to_send.delta_time = data->delta_time;
+    to_send.enc_ticks[0] = data->enc_ticks[0];
+    to_send.enc_ticks[1] = data->enc_ticks[1];
+    to_send.enc_ticks[2] = data->enc_ticks[2];
+    to_send.enc_delta_ticks[0] = data->enc_delta_ticks[0];
+    to_send.enc_delta_ticks[1] = data->enc_delta_ticks[1];
+    to_send.enc_delta_ticks[2] = data->enc_delta_ticks[2];
+    to_send.enc_delta_time = data->enc_delta_time;
     to_send.volts[0] = data->volts[0];
     to_send.volts[1] = data->volts[1];
     to_send.volts[2] = data->volts[2];
     to_send.volts[3] = data->volts[3];
-    to_send.angles_rpy[0] = data->angles_rpy[0];
-    to_send.angles_rpy[1] = data->angles_rpy[1];
-    to_send.angles_rpy[2] = data->angles_rpy[2];
+    to_send.imu_angles_rpy[0] = data->imu_angles_rpy[0];
+    to_send.imu_angles_rpy[1] = data->imu_angles_rpy[1];
+    to_send.imu_angles_rpy[2] = data->imu_angles_rpy[2];
     mbot_lcm_msgs_mbot_rob311_feedback_t_publish(lcmInstance, MBOT_ROB311_FEEDBACK_CHANNEL, &to_send);
 }
 
