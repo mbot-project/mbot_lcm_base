@@ -1,6 +1,6 @@
 package mbot_lcm_msgs;
 
-struct mbot_rob311_feedback_t
+struct mbot_balbot_feedback_t
 {
     int64_t utime;
     int32_t enc_ticks[3];       // no units
